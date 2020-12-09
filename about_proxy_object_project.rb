@@ -13,9 +13,52 @@ require File.expand_path(File.dirname(__FILE__) + '/neo')
 # of the Proxy class is given in the AboutProxyObjectProject koan.
 
 class Proxy
+  attr_accessor :object
+  attr_accessor :messages
   def initialize(target_object)
     @object = target_object
+    @messages = []
+    @call_count = {:power => 0, :on? => 0, :channel= => 0, :channel => 0}
     # ADD MORE CODE HERE
+  end
+  def called?(method_name)
+    if (@call_count[method_name] > 0)
+      true
+    end
+  end
+  def number_of_times_called(method_name)
+    return @call_count[method_name]
+  end
+  def method_missing(method_name, *args)
+    if method_name == :power
+      @object.send(:power)
+      if (!@messages.include?(:power))
+        @messages.push(:power)
+      end
+      @call_count[:power] += 1
+    elsif method_name == :on?
+      @object.send(:on?)
+      if (!@messages.include?(:on))
+        @messages.push(:on?)
+      end
+      @call_count[:on?] += 1
+    elsif (method_name[/channel=/] == "channel=") 
+      @object.send(:channel=, args[0])
+      if (!@messages.include?(:channel=))
+        @messages.push(:channel=)
+      end
+      @call_count[:channel=] = @call_count[:channel=] + 1
+    elsif (method_name[/channel/] == "channel")
+      return @object.channel
+    elsif ((method_name == :upcase!)&&(@object.class == String))
+      @object = @object.send(:upcase)
+      @messages.push(:upcase!)
+    elsif ((method_name == :split))
+      @messages.push(:split)
+      return @object.split
+    else
+      raise NoMethodError
+    end
   end
 
   # WRITE CODE HERE
